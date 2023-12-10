@@ -25,3 +25,19 @@ ul {
 li {
     margin-bottom: 10px;
 }
+.prioridad-baja {
+    background-color: lightblue;
+  }
+  
+  .prioridad-media {
+    background-color: lightgreen;
+  }
+  
+  .prioridad-alta {
+    background-color: lightcoral;
+  }
+  
+  /* Estilo para el botón activo */
+  button.active {
+    font-weight: bold;
+  }
