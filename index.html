@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+    <h1>Añadir y filtrar</h1>
+    <div id="notas">
+        <input type="text" v-model="nuevoNombre" placeholder="Nombre de la tarea">
+        <label for="prioridad">Prioridad</label>
+        <select v-model="nuevaPrioridad">
+            <option value="baja">Baja</option>
+            <option value="media">Media</option>
+            <option value="alta">Alta</option>
+        </select>
+        <button @click="agregarTarea" :disabled="!nuevoNombre.trim()">Nueva Tarea</button><br>
+    
+        <label for="filtrarCheckbox">Filtrar tareas</label>
+        <input type="checkbox" id="filtrarCheckbox" v-model="habilitarFiltro"><br>
+    
+        <div v-if="tareas.length === 0">
+            <p>No tienes ninguna tarea.</p>
+        </div>
+    
+        <div v-else>
+            <p>
+                Tienes {{ tareasPendientes.length }} tarea{{ tareasPendientes.length !== 1 ? 's' : '' }} pendiente{{ tareasPendientes.length !== 1 ? 's' : '' }} de un total de {{ tareas.length }} tarea{{ tareas.length !== 1 ? 's' : '' }}.
+            </p>
+            <ul>
+                <li v-for="tarea in tareasOrdenadas" :key="tarea.id">
+                    <input type="text" v-model="tarea.nombre">
+                    <select v-model="tarea.prioridad">
+                        <option value="baja">Baja</option>
+                        <option value="media">Media</option>
+                        <option value="alta">Alta</option>
+                    </select>
+                    <label for="hechoCheckbox">Hecho</label>
+                    <input type="checkbox" v-model="tarea.hecho">
+                    <span>{{ tiempoTranscurrido(tarea.tiempo) }}</span>
+                    <button @click="eliminarTarea(tarea.id)">Eliminar</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        const { createApp } = Vue;
+        const app = createApp({
+            data() {
+                return {
+                    tareas: this.cargarTareasDesdeLocalStorage() || [],
+                    nuevoNombre: '',
+                    nuevaPrioridad: 'baja',
+                    nuevoHecho: false,
+                    habilitarFiltro: false,
+                    filtroSegundoInput: ''
+                };
+            },
+            methods: {
+                agregarTarea() {
+                    const nuevaTarea = {
+                        id: Date.now(),
+                        nombre: this.nuevoNombre,
+                        prioridad: this.nuevaPrioridad,
+                        hecho: this.nuevoHecho,
+                        tiempo:Date.now(),
+                    };
+                    this.tareas.push(nuevaTarea);
+                    this.nuevoNombre = '';
+                    this.nuevaPrioridad = 'baja';
+                    this.nuevoHecho = false;
+                    this.guardarTareasEnLocalStorage();
+                },
+                eliminarTarea(id) {
+                    const indiceTarea = this.tareas.findIndex(tarea => tarea.id === id);
+                    if (indiceTarea !== -1) {
+                        this.tareas.splice(indiceTarea, 1);
+                        this.guardarTareasEnLocalStorage();
+                    }
+                },
+                guardarTareasEnLocalStorage() {
+                    localStorage.setItem('tareas', JSON.stringify(this.tareas));
+                },
+                cargarTareasDesdeLocalStorage() {
+                    return JSON.parse(localStorage.getItem('tareas'));
+                },
+
+                tiempoTranscurrido(creacion) {
+                    const ahora = new Date();
+                    const tiempoCreacion = new Date(creacion);
+                    const diferencia = ahora.getTime() - tiempoCreacion.getTime();
+                    const segundos = Math.floor(diferencia / 1000);
+                    const minutos = Math.floor(segundos / 60);
+                    const horas = Math.floor(minutos / 60);
+                    const dias = Math.floor(horas / 24);
+
+                    if (dias > 0) {
+                        return `Creado hace ${dias} día${dias !== 1 ? 's' : ''}`;
+                    } else if (horas > 0) {
+                        return `Creado hace ${horas} hora${horas !== 1 ? 's' : ''}`;
+                    } else if (minutos > 0) {
+                        return `Creado hace ${minutos} minuto${minutos !== 1 ? 's' : ''}`;
+                    } else {
+                        return `Creado hace unos segundos`;
+                    }
+                }
+    
+            },
+            computed: {
+                tareasOrdenadas() {
+                    return this.tareas.slice().sort((a, b) => {
+                        if (a.prioridad === 'baja' && b.prioridad === 'alta') return 1;
+                        else if (a.prioridad === 'alta' && b.prioridad === 'baja') return -1;
+                        else return 0;
+                    });
+                },
+                tareasPendientes() {
+                    return this.tareas.filter(tarea => !tarea.hecho);
+                }
+            },
+            mounted() {
+                window.addEventListener('beforeunload', () => {
+                    this.guardarTareasEnLocalStorage();
+                });
+            }
+        });
+    
+        app.mount('#notas');
+    </script>
+</body>
+</html>
