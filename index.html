@@ -83,6 +83,7 @@
     <h1>Añadir y filtrar</h1>
     <div id="notas">
         <input type="text" v-model="nuevoNombre" placeholder="Nombre de la tarea" @keyup.enter="agregarTarea">
+        <button @click="eliminarHechas">Eliminar Tareas Completadas</button>
         <label for="prioridad">Prioridad</label>
         <div>
             <button @click="cambiarPrioridad('baja')" :class="{ active: nuevaPrioridad === 'baja' }">Baja</button>
@@ -201,6 +202,10 @@
                 },
                 marcarHecho(tarea) {
                     tarea.hecho = !tarea.hecho;
+                    this.guardarTareasEnLocalStorage();
+                },
+                eliminarHechas() {
+                    this.tareas = this.tareas.filter(tarea => !tarea.hecho);
                     this.guardarTareasEnLocalStorage();
                 }
             },
